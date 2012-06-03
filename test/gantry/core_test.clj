@@ -1,19 +1,20 @@
 (ns gantry.core-test
   (:use clojure.test
-     gantry.core)
-  (:require 
-     clojure.contrib.io))
+     gantry.core))
 
 
 (deftest gen-ssh-cmd-test
-         (is (= ["ssh"] (gen-ssh-cmd)))
-         (is (= ["ssh" "-p" "22"] (gen-ssh-cmd nil 22)))
-         (is (= ["ssh" "-o" "StrictHostKeyChecking=no" "-i" "file" "-p" "22" ] (gen-ssh-cmd "file" 22))))
+         (is (= ["ssh"] (vec (gen-ssh-cmd))))
+         (is (= ["ssh" "-p" "22"] (vec (gen-ssh-cmd nil 22))))
+         (let [res (vec (gen-ssh-cmd "file" 22))]
+           (is (= ["ssh" "-o"] (take 2 res)))
+           (is (= ["-i" "file" "-p" "22"] (take-last 4 res)))
+           (is (#{"StrictHostKeyChecking=no" "StrictHostKeyChecking no"} (nth res 2)))))
          
 
 (deftest gen-rsync-cmd-test
-         (is (= ["rsync" "-avzL" "source-dir" "localhost:dest-dir"] (gen-rsync-cmd "localhost" "source-dir" "dest-dir")))
-         (is (= ["rsync" "-avzL" "-e" "ssh  -p  22" "source-dir" "localhost:dest-dir"] (gen-rsync-cmd "localhost" "source-dir" "dest-dir" {:port 22}))))
+         (is (= ["rsync" "-avzL" "source-dir" "localhost:dest-dir"] (vec (gen-rsync-cmd "localhost" "source-dir" "dest-dir"))))
+         (is (= ["rsync" "-avzL" "-e" "ssh  -p  22" "source-dir" "localhost:dest-dir"] (vec (gen-rsync-cmd "localhost" "source-dir" "dest-dir" {:port 22})))))
 
 
 ; you need to make sure you have enabled ssh on your localhost
